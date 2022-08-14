@@ -1,51 +1,43 @@
-import os
+import configparser
+from os import listdir as ls
+from os import replace as move
+from os.path import abspath, isdir
 
-f_image = ['.bmp', '.tiff', '.tif', '.gif', 'jpeg', '.jpg', '.png', '.svg', '.webp']
-f_video = ['.avi', '.mpeg', '.wmv', '.mp4', '.mov', '.webm']
-f_document = ['.txt', '.doc', '.odt', '.rtf', '.html', '.pdf', '.ppt', '.pptx', '.xlsx']
-f_audio = ['.wav', '.ogg', '.mp3', '.flac']
-f_archive = ['.7z', '.cab', '.deb', '.gz', '.jar', '.rar', '.rpm', '.tar', '.tar-gz', '.tgz', '.zip', '.zipx']
+conf = configparser.ConfigParser()
+conf.read(f'{__file__[:__file__.rfind("/")-len(__file__)+1]}config.ini')
 
-def check_for_sort(file: str, formats: list) -> bool:
+def check_for_sort(file, formats) -> bool:
     for form in formats:
-        if form in file:
-            return True
-    return False
+        return "."+form in file
 
-def sort_files(Main: str, Audio: str, Images: str, Videos: str, Documents: str, Archive: str) -> None:
-    to_sort = os.path.abspath("")
-    for file in os.listdir(to_sort):
-        u_file = f"{to_sort}/{file}"
-
-        if check_for_sort(file, f_image):
-            print(f"Picture: {u_file}")
-            os.replace(u_file, f"{Main}{Images}{file}")
-        
-        elif check_for_sort(file, f_video):
-            print(f"Video: {u_file}")
-            os.replace(u_file, f"{Main}{Videos}{file}")
-        
-        elif check_for_sort(file, f_document):
-            print(f"Document: {u_file}")
-            os.replace(u_file, f"{Main}{Documents}{file}")
-        
-        elif check_for_sort(file, f_audio):
-            print(f"Audio: {u_file}")
-            os.replace(u_file, f"{Main}{Audio}{file}")
-        
-        elif check_for_sort(file, f_archive):
-            print(f"Archive: {u_file}")
-            os.replace(u_file, f"{Main}{Archive}{file}")
-        
-        else:
+def main():
+    to_sort = (abspath('')+"/", ls(abspath('')+"/"))
+    try:
+        for file in to_sort[1]:
             try:
-                os.listdir(u_file)
-                print(f"Directory: {u_file}")
-                pass
-            except NotADirectoryError:
-                pass
+                u_file = f"{to_sort[0]}{file}"
+                if check_for_sort(file, conf['formats']['audio'].split(' , ')):
+                    print(f"Audio: {u_file}")
+                    move(u_file, conf['sorted']['audio']+file)
+                elif check_for_sort(file, conf['formats']['image'].split(' , ')):
+                    print(f"Picture: {u_file}")
+                    move(u_file, conf['sorted']['image']+file)
+                elif check_for_sort(file, conf['formats']['video'].split(' , ')):
+                    print(f"Video: {u_file}")
+                    move(u_file, conf['sorted']['video']+file)
+                elif check_for_sort(file, conf['formats']['document'].split(' , ')):
+                    print(f"Document: {u_file}")
+                    move(u_file, conf['sorted']['document']+file)
+                elif check_for_sort(file, conf['formats']['archive'].split(' , ')):
+                    print(f"Archive: {u_file}")
+                    move(u_file, conf['sorted']['archive']+file)
+                else:
+                    if isdir(u_file):
+                        print(f"Directory: {u_file}")
             except PermissionError:
                 print(f"Permission denied: {u_file}")
+    except PermissionError:
+        print(f"Permission denied: {to_sort}")
 
-
-sort_files("/home/yar3k/", "Audio/", "Pictures/", "Videos/", "Documents/", "Archives/")
+if __name__ == "__main__":
+    main()
